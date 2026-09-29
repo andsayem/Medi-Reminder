@@ -7,14 +7,15 @@ class MedicineActionService {
 
   // Snooze 10 minutes
   static Future<void> snooze(int id) async {
-    await _plugin.cancel(id);
+    await _plugin.cancel(id: id);
 
     await _plugin.zonedSchedule(
-      id,
-      '⏰ Snoozed Medicine',
-      'Reminder after snooze',
-      tz.TZDateTime.now(tz.local).add(const Duration(minutes: 10)),
-      const NotificationDetails(
+      id: id,
+      title: '⏰ Snoozed Medicine',
+      body: 'Reminder after snooze',
+      scheduledDate:
+          tz.TZDateTime.now(tz.local).add(const Duration(minutes: 10)),
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'medicine_channel',
           'Medicine Reminder',
@@ -23,13 +24,11 @@ class MedicineActionService {
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.wallClockTime,
     );
   }
 
   // Mark as taken
   static Future<void> markAsTaken(int id) async {
-    await _plugin.cancel(id);
+    await _plugin.cancel(id: id);
   }
 }

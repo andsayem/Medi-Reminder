@@ -46,7 +46,7 @@ class NotificationService {
     const settings = InitializationSettings(android: android, iOS: ios);
 
     await _notificationsPlugin.initialize(
-      settings,
+      settings: settings,
       onDidReceiveNotificationResponse: _onTapNotification,
     );
 
@@ -235,11 +235,11 @@ class NotificationService {
     final soundEnabled = await getSoundEnabled();
 
     await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      scheduled,
-      _notificationDetails(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: scheduled,
+      notificationDetails: _notificationDetails(
         imagePath: resolvedImagePath,
         title: title,
         body: body,
@@ -247,9 +247,6 @@ class NotificationService {
       ),
 
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.wallClockTime,
 
       matchDateTimeComponents: DateTimeComponents.time,
     );
@@ -368,11 +365,11 @@ class NotificationService {
     );
 
     await _notificationsPlugin.show(
-      0,
-      'Test Medicine Reminder',
-      'This is a test notification '
+      id: 0,
+      title: 'Test Medicine Reminder',
+      body: 'This is a test notification '
           'working perfectly!',
-      notificationDetails,
+      notificationDetails: notificationDetails,
     );
   }
 
@@ -381,10 +378,10 @@ class NotificationService {
   /// ===============================
 
   Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id);
+    await _notificationsPlugin.cancel(id: id);
 
     for (var index = 0; index < 3; index++) {
-      await _notificationsPlugin.cancel(_notificationId(id, index));
+      await _notificationsPlugin.cancel(id: _notificationId(id, index));
     }
   }
 
@@ -420,18 +417,16 @@ class NotificationService {
 
   Future<void> testBackgroundNotification() async {
     await _notificationsPlugin.zonedSchedule(
-      1,
-      "TEST",
-      "App closed test notification",
+      id: 1,
+      title: "TEST",
+      body: "App closed test notification",
 
-      tz.TZDateTime.now(tz.local).add(const Duration(minutes: 1)),
+      scheduledDate:
+          tz.TZDateTime.now(tz.local).add(const Duration(minutes: 1)),
 
-      _notificationDetails(),
+      notificationDetails: _notificationDetails(),
 
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.wallClockTime,
     );
   }
 }

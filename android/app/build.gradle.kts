@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.andsayem.medicineReminder"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -31,7 +31,7 @@ android {
     defaultConfig {
         applicationId = "com.andsayem.medicineReminder"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 37
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -52,7 +52,7 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // ML Kit dependencies
     implementation("com.google.mlkit:text-recognition:16.0.0")
