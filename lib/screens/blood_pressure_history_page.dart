@@ -123,7 +123,8 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
 
   // ================= PREMIUM CARD =================
   Widget _premiumCard(BloodPressure bp, BloodPressure? prev) {
-    final statusColor = bp.pulse != null ? Colors.red : AppColors.primary;
+    final status = _status(bp.systolic, bp.diastolic);
+    final statusColor = status.color;
     final diffSys = prev != null ? bp.systolic - prev.systolic : null;
     final dateTime = DateFormat(
       'MMM dd, yyyy - hh:mm a',
@@ -186,7 +187,7 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Pulse: ${bp.pulse ?? 'N/A'} BPM',
+                            '${status.label} • Pulse: ${bp.pulse ?? 'N/A'} BPM',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
@@ -331,12 +332,43 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
 
               const SizedBox(height: 12),
 
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Close"),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Delete',
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.accent,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.read<MedicineProvider>().deleteBloodPressure(
+                        bp.id!,
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _startEdit(bp);
+                      },
+                      icon: const Icon(Icons.edit_rounded),
+                      label: const Text('Edit'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Close"),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -396,9 +428,128 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
           _input(_pulse, "Pulse (optional)", true),
           const SizedBox(height: 10),
           _input(_notes, "Notes"),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _chipButton(
+                  Icons.calendar_month_rounded,
+                  DateFormat('dd MMM yyyy').format(_date),
+                  _pickDate,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _chipButton(
+                  Icons.access_time_rounded,
+                  _time.format(context),
+                  _pickTime,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: () => _save(provider),
+            icon: const Icon(Icons.check_rounded),
+            label: Text(_editBp == null ? 'Save Reading' : 'Update Reading'),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _chipButton(IconData icon, String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _date,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _date = picked);
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _time);
+    if (picked != null) setState(() => _time = picked);
+  }
+
+  Future<void> _save(MedicineProvider provider) async {
+    final sys = int.tryParse(_sys.text.trim());
+    final dia = int.tryParse(_dia.text.trim());
+    if (sys == null || dia == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter systolic and diastolic values')),
+      );
+      return;
+    }
+    final date = DateFormat('yyyy-MM-dd').format(_date);
+    final time =
+        '${_time.hour.toString().padLeft(2, '0')}:'
+        '${_time.minute.toString().padLeft(2, '0')}';
+    final pulse = int.tryParse(_pulse.text.trim());
+    final bp = BloodPressure(
+      id: _editBp?.id,
+      systolic: sys,
+      diastolic: dia,
+      pulse: pulse,
+      date: date,
+      time: time,
+      notes: _notes.text.trim(),
+      patient: _editBp?.patient ?? provider.activeProfile,
+      createdAt: _editBp?.createdAt ?? '',
+    );
+    if (_editBp == null) {
+      await provider.addBloodPressure(bp);
+    } else {
+      await provider.updateBloodPressure(bp);
+    }
+    if (!mounted) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _showForm = false;
+      _editBp = null;
+      _clear();
+    });
+  }
+
+  /// AHA categories: Normal / Elevated / High.
+  ({String label, Color color}) _status(int sys, int dia) {
+    if (sys >= 140 || dia >= 90) {
+      return (label: 'High', color: Colors.red);
+    }
+    if (sys >= 130 || dia >= 80) {
+      return (label: 'Stage 1', color: Colors.deepOrange);
+    }
+    if (sys >= 120) return (label: 'Elevated', color: Colors.orange);
+    return (label: 'Normal', color: Colors.green);
   }
 
   // ================= INPUT =================

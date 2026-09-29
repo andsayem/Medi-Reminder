@@ -8,11 +8,27 @@ import '../models/medicine_model.dart';
 import '../providers/medicine_provider.dart';
 import 'edit_medicine_page.dart';
 import '../utils/app_colors.dart';
+import '../widgets/ui_kit.dart';
 
 class MedicineDetailsPage extends StatelessWidget {
   final Medicine medicine;
 
   const MedicineDetailsPage({super.key, required this.medicine});
+
+  @override
+  Widget build(BuildContext context) {
+    // Show the latest saved version so edits appear immediately.
+    final latest = context.select<MedicineProvider, Medicine?>(
+      (p) => p.medicines.where((m) => m.id == medicine.id).firstOrNull,
+    );
+    return _MedicineDetailsView(medicine: latest ?? medicine);
+  }
+}
+
+class _MedicineDetailsView extends StatelessWidget {
+  final Medicine medicine;
+
+  const _MedicineDetailsView({required this.medicine});
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +72,11 @@ class MedicineDetailsPage extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
+                        stops: const [0, 0.3, 1],
                         colors: [
-                          Colors.black.withOpacity(0.10),
-                          Colors.black.withOpacity(0.38),
+                          Colors.black.withValues(alpha: 0.18),
+                          Colors.transparent,
+                          Colors.transparent,
                         ],
                       ),
                     ),
@@ -232,14 +250,14 @@ class MedicineDetailsPage extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.2,
-        color: AppColors.textSecondary,
-      ),
+    const icons = {
+      'Dosage & Schedule': Icons.schedule_rounded,
+      'Additional Info': Icons.info_rounded,
+      'Notes': Icons.sticky_note_2_rounded,
+    };
+    return SectionHeader(
+      icon: icons[title] ?? Icons.label_rounded,
+      title: title,
     );
   }
 

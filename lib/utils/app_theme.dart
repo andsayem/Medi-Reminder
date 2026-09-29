@@ -1,9 +1,17 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
 class AppTheme {
   AppTheme._();
+
+  static const _pageTransitions = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+      TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+    },
+  );
 
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
@@ -19,6 +27,12 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: AppColors.background,
     visualDensity: VisualDensity.adaptivePlatformDensity,
+    pageTransitionsTheme: _pageTransitions,
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.secondary,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.background,
       foregroundColor: AppColors.textPrimary,
@@ -103,6 +117,7 @@ class AppTheme {
       onSurface: Colors.white,
     ),
     scaffoldBackgroundColor: const Color(0xFF020617),
+    pageTransitionsTheme: _pageTransitions,
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFF020617),
       foregroundColor: Colors.white,

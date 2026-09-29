@@ -82,6 +82,7 @@ class MedicineProvider extends ChangeNotifier {
   void setActiveProfile(String profile) {
     _activeProfile = profile;
     notifyListeners();
+    refreshNextDoseMedicines();
   }
 
   // =========================
